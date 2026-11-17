@@ -1,0 +1,28 @@
+# /config/template_presence.yaml — include from configuration.yaml with:
+#   template: !include template_presence.yaml
+# Turns Bermuda's per-phone "area" sensor into per-room occupancy binary sensors,
+# plus a "walking" sensor from the phone's detected-activity sensor (Android).
+# Replace sensor.person_phone_ble_area with your Bermuda area sensor,
+# and the area names with your own rooms.
+- binary_sensor:
+    - name: "Person BLE Kitchen"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Kitchen' }}"
+    - name: "Person BLE Living Room"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Living Room' }}"
+    - name: "Person BLE Dining Room"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Dining Room' }}"
+    - name: "Person BLE Bedroom"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Bedroom' }}"
+    - name: "Person BLE Office"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Office' }}"
+    - name: "Person BLE Bathroom"
+      device_class: occupancy
+      state: "{{ states('sensor.person_phone_ble_area') == 'Bathroom' }}"
+    - name: "Person Walking"
+      device_class: moving
+      state: "{{ states('sensor.person_phone_detected_activity') in ['walking', 'running', 'on_foot'] }}"
