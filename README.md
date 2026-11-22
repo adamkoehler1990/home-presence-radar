@@ -98,6 +98,15 @@ Expose per-target `x`, `y`, `speed`, `distance` sensors (3 targets), the presenc
 
 Flash each board once over USB from the ESPHome dashboard; everything after that is OTA. Label the boards physically — six identical DevKitCs are indistinguishable once flashed.
 
+### Build and flash
+
+1. Install the **ESPHome** add-on in Home Assistant (or `pip install esphome`).
+2. Add `wifi_ssid` and `wifi_password` to ESPHome's `secrets.yaml`.
+3. Copy `esphome/presence-room.yaml` to `presence-<room>.yaml` and change `name`/`friendly_name`.
+4. First flash over USB: connect the board, then in the ESPHome dashboard choose *Install* > *Plug into this computer* (or `esphome run presence-<room>.yaml`). If the upload fails to connect, hold the board's BOOT button while it starts.
+5. After the board joins WiFi, Home Assistant offers it under *Settings > Devices & Services*. Select *Add* and assign it to the room's Area.
+6. Later updates go over WiFi (OTA) from the dashboard.
+
 ### Troubleshooting a silent radar
 
 The radar streams frames continuously once powered, so no data means a wiring or power problem. In this build the cause was a poor 5V contact, not swapped TX/RX.
