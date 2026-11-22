@@ -27,8 +27,9 @@ Layered approach, each layer useful on its own:
 
 | Item | Qty | ~Price | Notes |
 |---|---|---|---|
-| HLK-LD2450 radar module | 6 | ~$8–10 ea (2/4-packs cheaper) | Must be LD2450 — the LD2410 has **no X/Y output** |
-| ESP32-DevKitC-32 (USB-C) | 6 | ~$5 ea in 6-packs | Any ESP32 with a free hardware UART works |
+| [HLK-LD2450-style radar module](https://www.amazon.com/dp/B0GV3X75WF) | 6 | ~$8–10 ea (2/4-packs cheaper) | Must be LD2450 — the LD2410 has **no X/Y output**. LD2450-style clones (e.g. HLIH V1.1) work too |
+| [ESP32-DevKitC-32 (USB-C)](https://www.amazon.com/dp/B0DSZBH9N9) | 6 | ~$5 ea in 6-packs | Any ESP32 with a free hardware UART works; 38-pin CP2102 boards (NodeMCU-32S style) are fine. On Windows, CP2102 boards need the Silicon Labs driver |
+| [USB-to-TTL serial adapter (FTDI)](https://www.amazon.com/dp/B07BBPX8B8) | 1 | ~$10 | Optional, for debugging a silent radar (see Troubleshooting) |
 | Dupont jumper wires, 5V USB chargers | — | spare-drawer | 4 wires + 1 charger per node |
 
 BLE layer (optional but recommended): 2+ ESPHome bluetooth proxies placed at opposite ends of the house. Home Assistant Voice PE, ESP32 flashed with the ready-made `bluetooth-proxy` project, or any existing ESPHome node with BT enabled.
@@ -66,6 +67,8 @@ You get `binary_sensor.<room>_occupancy_status` + a probability sensor per room.
 | TX | GPIO16 |
 | RX | GPIO17 |
 
+On the ESP32 dev board, 5V and GND are the last two pins of the row at the USB end (side by side).
+
 TX/RX **crossed**. The LD2450's UART is 3.3V logic — direct connection, no level shifter. No data later = the pair is swapped; swapping is harmless, just fix it.
 
 ### Firmware
@@ -89,9 +92,29 @@ ld2450:
   uart_id: uart_ld2450
 ```
 
+Leave `Radar Bluetooth` off and turn `Multi Target Tracking` on.
+
 Expose per-target `x`, `y`, `speed`, `distance` sensors (3 targets), the presence/moving/still binary sensors, a `multi_target` switch, and `presence_timeout`. Copy the file once per room, change only the device name.
 
 Flash each board once over USB from the ESPHome dashboard; everything after that is OTA. Label the boards physically — six identical DevKitCs are indistinguishable once flashed.
+
+### Build and flash
+
+1. Install the **ESPHome** add-on in Home Assistant (or `pip install esphome`).
+2. Add `wifi_ssid` and `wifi_password` to ESPHome's `secrets.yaml`.
+3. Copy `esphome/presence-room.yaml` to `presence-<room>.yaml` and change `name`/`friendly_name`.
+4. First flash over USB: connect the board, then in the ESPHome dashboard choose *Install* > *Plug into this computer* (or `esphome run presence-<room>.yaml`). If the upload fails to connect, hold the board's BOOT button while it starts.
+5. After the board joins WiFi, Home Assistant offers it under *Settings > Devices & Services*. Select *Add* and assign it to the room's Area.
+6. Later updates go over WiFi (OTA) from the dashboard.
+
+### Troubleshooting a silent radar
+
+The radar streams frames continuously once powered, so no data means a wiring or power problem. In this build the cause was a poor 5V contact, not swapped TX/RX.
+
+1. Re-seat 5V and GND, and check continuity at both ends of each wire.
+2. Loopback test the ESP32 UART: jumper GPIO16 to GPIO17 and confirm it echoes.
+3. Test the radar alone with a USB-to-TTL adapter at 256000 baud 8N1: you should see frames beginning `AA FF 03 00` and ending `55 CC`.
+4. If the radar works alone and the ESP32 UART loops back, the fault is in the wiring or power between them.
 
 ### Mounting
 
